@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+python-dotenv
+bcrypt
+python-multipart
+itsdangerous
+pymupdf
+chromadb
+requests
+jinja2

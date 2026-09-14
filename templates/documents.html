@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>My Documents | DocuAI</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/documents.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+
+            <div class="brand-logo">
+                📄
+            </div>
+
+            <span>
+                DocuAI
+            </span>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <a
+                href="/dashboard"
+                class="side-link"
+            >
+
+                <span class="side-icon">
+                    ⌂
+                </span>
+
+                <span>
+                    Dashboard
+                </span>
+
+            </a>
+
+
+            <a
+                href="/documents"
+                class="side-link active"
+            >
+
+                <span class="side-icon">
+                    ▣
+                </span>
+
+                <span>
+                    My Documents
+                </span>
+
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="secure-box">
+
+                <div class="secure-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <strong>
+                        Secure Workspace
+                    </strong>
+
+                    <p>
+                        Your documents are private
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <a
+                href="/logout"
+                class="sidebar-logout"
+            >
+
+                <span>
+                    ↪
+                </span>
+
+                Logout
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div class="mobile-brand">
+
+                <div class="brand-logo">
+                    📄
+                </div>
+
+                <span>
+                    DocuAI
+                </span>
+
+            </div>
+
+
+            <div class="top-user">
+
+                <div class="user-avatar">
+                    {{ user_name[0]|upper if user_name else "U" }}
+                </div>
+
+
+                <div class="user-details">
+
+                    <strong>
+                        {{ user_name }}
+                    </strong>
+
+                    <span>
+                        {{ user_email }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =========================
+             PAGE CONTENT
+        ========================== -->
+
+        <section class="page-content">
+
+
+            <!-- PAGE HEADER -->
+
+            <div class="page-header">
+
+                <div>
+
+                    <span class="page-label">
+                        DOCUMENT LIBRARY
+                    </span>
+
+                    <h1>
+                        My Documents
+                    </h1>
+
+                    <p>
+                        Manage and chat with your uploaded PDF documents.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="/dashboard#upload-area"
+                    class="upload-button"
+                >
+
+                    <span>
+                        +
+                    </span>
+
+                    Upload PDF
+
+                </a>
+
+            </div>
+
+
+
+            <!-- DOCUMENT COUNT -->
+
+            <div class="document-summary">
+
+                <div class="summary-icon">
+                    ▣
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Documents
+                    </span>
+
+                    <strong>
+                        {{ documents|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DOCUMENTS -->
+
+            {% if documents %}
+
+            <div class="documents-grid">
+
+                {% for document in documents %}
+
+                <article class="document-card">
+
+
+                    <div class="card-top">
+
+                        <div class="pdf-icon">
+                            PDF
+                        </div>
+
+
+                        <button
+                            class="more-button"
+                            type="button"
+                        >
+                            ⋮
+                        </button>
+
+                    </div>
+
+
+                    <div class="document-content">
+
+                        <h2
+                            title="{{ document.document_name }}"
+                        >
+                            {{ document.document_name }}
+                        </h2>
+
+
+                        <p class="document-type">
+                            PDF Document
+                        </p>
+
+
+                        <div class="document-meta">
+
+                            <div>
+
+                                <span class="meta-label">
+                                    Document ID
+                                </span>
+
+                                <span class="meta-value">
+                                    {{ document.document_id[:12] }}...
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer">
+
+                        <a
+                            href="/dashboard?document_id={{ document.document_id }}"
+                            class="chat-button"
+                        >
+
+                            <span>
+                                💬
+                            </span>
+
+                            Open Chat
+
+                        </a>
+
+                    </div>
+
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+
+
+            {% else %}
+
+
+            <!-- EMPTY STATE -->
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    📁
+                </div>
+
+
+                <h2>
+                    No documents yet
+                </h2>
+
+
+                <p>
+                    Upload your first PDF and start asking questions
+                    about your documents.
+                </p>
+
+
+                <a
+                    href="/dashboard#upload-area"
+                    class="upload-button"
+                >
+
+                    <span>
+                        +
+                    </span>
+
+                    Upload Your First PDF
+
+                </a>
+
+            </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>
+

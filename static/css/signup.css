@@ -1,0 +1,340 @@
+/* =========================
+   RESET
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+/* =========================
+   BODY
+========================= */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+
+    background: #080b12;
+
+    color: #f8fafc;
+}
+
+
+/* =========================
+   SIGNUP PAGE
+========================= */
+
+.signup-page {
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px 20px;
+
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(37, 99, 235, 0.12),
+            transparent 35%
+        ),
+        #080b12;
+}
+
+
+/* =========================
+   SIGNUP CARD
+========================= */
+
+.signup-card {
+    width: 100%;
+    max-width: 440px;
+
+    padding: 42px;
+
+    background: #0e131d;
+
+    border: 1px solid #263246;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+.logo {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-bottom: 32px;
+
+    color: #f8fafc;
+
+    font-size: 22px;
+
+    font-weight: 700;
+}
+
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 18px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.heading {
+    text-align: center;
+
+    margin-bottom: 30px;
+}
+
+
+.heading h1 {
+    margin-bottom: 10px;
+
+    color: #f8fafc;
+
+    font-size: 30px;
+
+    line-height: 1.2;
+
+    letter-spacing: -0.5px;
+}
+
+
+.heading p {
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+.form-group {
+    margin-bottom: 19px;
+}
+
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.form-group input {
+    width: 100%;
+
+    height: 48px;
+
+    padding: 0 14px;
+
+    border: 1px solid #263246;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #090e17;
+
+    color: #f8fafc;
+
+    font-size: 14px;
+
+    transition: 0.2s;
+}
+
+
+.form-group input::placeholder {
+    color: #475569;
+}
+
+
+.form-group input:focus {
+    border-color: #3b82f6;
+
+    background: #0b111c;
+
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+
+/* =========================
+   SIGNUP BUTTON
+========================= */
+
+.signup-button {
+    width: 100%;
+
+    height: 48px;
+
+    margin-top: 7px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.signup-button:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+}
+
+
+.signup-button:active {
+    transform: translateY(0);
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+#message {
+    margin-top: 15px;
+
+    text-align: center;
+
+    color: #60a5fa;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   LOGIN TEXT
+========================= */
+
+.login-text {
+    margin-top: 25px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+.login-text a {
+    color: #60a5fa;
+
+    text-decoration: none;
+
+    font-weight: 600;
+}
+
+
+.login-text a:hover {
+    color: #93c5fd;
+}
+
+
+/* =========================
+   BACK HOME
+========================= */
+
+.back-home {
+    display: block;
+
+    margin-top: 22px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    transition: 0.2s;
+}
+
+
+.back-home:hover {
+    color: #cbd5e1;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 500px) {
+
+    .signup-page {
+        padding: 25px 15px;
+    }
+
+    .signup-card {
+        padding: 30px 22px;
+
+        border-radius: 16px;
+    }
+
+    .heading h1 {
+        font-size: 26px;
+    }
+
+    .logo {
+        margin-bottom: 26px;
+    }
+
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account - DocuAI</title>
+
+    <link rel="stylesheet" href="/static/css/signup.css">
+</head>
+
+<body>
+
+    <div class="signup-page">
+
+        <div class="signup-card">
+
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-icon">D</div>
+                <span>DocuAI</span>
+            </div>
+
+
+            <!-- Heading -->
+            <div class="heading">
+
+                <h1>Create your account</h1>
+
+                <p>
+                    Start chatting with your documents
+                    in a smarter way.
+                </p>
+
+            </div>
+
+
+            <!-- Signup Form -->
+            <form id="signupForm" action="/auth/signup" method="POST">
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Enter your full name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Create a password"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        placeholder="Confirm your password"
+                        required
+                    >
+
+                </div>
+
+
+                <button type="submit" class="signup-button">
+                    Create Account
+                </button>
+
+            </form>
+
+
+            <!-- Message -->
+            <div id="message"></div>
+
+
+            <!-- Login -->
+            <p class="login-text">
+                Already have an account?
+
+                <a href="/login">
+                    Login
+                </a>
+            </p>
+
+
+            <!-- Back -->
+            <a href="/" class="back-home">
+                ← Back to Home
+            </a>
+
+        </div>
+
+    </div>
+    <script src="/static/js/signup.js"></script>
+
+</body>
+</html>
