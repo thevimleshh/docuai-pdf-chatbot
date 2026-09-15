@@ -34,7 +34,7 @@ from chunking import split_text_into_chunks
 app = FastAPI()
 app.add_middleware(
     SessionMiddleware,
-    secret_key="docuai-secret-key-change-this-later"
+   secret_key=os.getenv("SECRET_KEY")
 )
 
 
