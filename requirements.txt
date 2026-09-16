@@ -9,4 +9,4 @@ itsdangerous
 pymupdf
 chromadb
 requests
-jinja2  
+jinja2 

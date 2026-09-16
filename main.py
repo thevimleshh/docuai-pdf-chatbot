@@ -1,6 +1,7 @@
-import random
+
 import os
 import shutil
+import uuid
 
 from fastapi import (
     FastAPI,
@@ -10,13 +11,12 @@ from fastapi import (
     UploadFile,
     File
 )
-import uuid
-from vector_store import add_chunks,search_chunks
-from ai_model import ask_ai
-from starlette.middleware.sessions import SessionMiddleware
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+
+from starlette.middleware.sessions import SessionMiddleware
 
 from sqlalchemy.orm import Session
 
@@ -24,37 +24,40 @@ from database import engine, Base, get_db
 import models
 
 from auth import hash_password, verify_password
-from google_service import send_verification_email
-from email_verify import router as email_verify_router
 
 from pdf_reader import extract_text_from_pdf
 from chunking import split_text_into_chunks
+from vector_store import add_chunks, search_chunks
+from ai_model import ask_ai
 
+
+# ==========================================
+# APP
+# ==========================================
 
 app = FastAPI()
+
+
+# ==========================================
+# SESSION
+# ==========================================
+
 app.add_middleware(
     SessionMiddleware,
-   secret_key=os.getenv("SECRET_KEY")
+    secret_key=os.getenv("SECRET_KEY")
 )
 
 
-# ==============================
+# ==========================================
 # DATABASE
-# ==============================
+# ==========================================
 
 Base.metadata.create_all(bind=engine)
 
 
-# ==============================
-# EMAIL VERIFICATION ROUTER
-# ==============================
-
-app.include_router(email_verify_router)
-
-
-# ==============================
+# ==========================================
 # STATIC FILES
-# ==============================
+# ==========================================
 
 app.mount(
     "/static",
@@ -63,18 +66,18 @@ app.mount(
 )
 
 
-# ==============================
+# ==========================================
 # TEMPLATES
-# ==============================
+# ==========================================
 
 templates = Jinja2Templates(
     directory="templates"
 )
 
 
-# ==============================
+# ==========================================
 # HOME
-# ==============================
+# ==========================================
 
 @app.get("/")
 async def home(request: Request):
@@ -85,9 +88,9 @@ async def home(request: Request):
     )
 
 
-# ==============================
+# ==========================================
 # SIGNUP PAGE
-# ==============================
+# ==========================================
 
 @app.get("/signup")
 async def signup(request: Request):
@@ -98,9 +101,9 @@ async def signup(request: Request):
     )
 
 
-# ==============================
+# ==========================================
 # SIGNUP
-# ==============================
+# ==========================================
 
 @app.post("/auth/signup")
 async def signup_user(
@@ -110,9 +113,15 @@ async def signup_user(
     db: Session = Depends(get_db)
 ):
 
+    # --------------------------------------
+    # Check existing user
+    # --------------------------------------
+
     existing_user = (
         db.query(models.User)
-        .filter(models.User.email == email)
+        .filter(
+            models.User.email == email
+        )
         .first()
     )
 
@@ -120,66 +129,50 @@ async def signup_user(
 
         return {
             "success": False,
-            "message": "Email already registered"
+            "message":
+                "Email already registered."
         }
 
 
-    # Generate 6 digit verification code
-    verification_code = str(
-        random.randint(100000, 999999)
+    # --------------------------------------
+    # Hash password
+    # --------------------------------------
+
+    hashed_password = hash_password(
+        password
     )
 
 
-    # Hash password
-    hashed_password = hash_password(password)
-
-
+    # --------------------------------------
     # Create user
+    # --------------------------------------
+
     new_user = models.User(
         name=name,
         email=email,
-        password=hashed_password,
-        is_verified=False,
-        verification_code=verification_code
+        password=hashed_password
     )
 
-
     db.add(new_user)
+
     db.commit()
+
     db.refresh(new_user)
 
 
-    # Send verification email
-    try:
+    # --------------------------------------
+    # Signup successful
+    # --------------------------------------
 
-        send_verification_email(
-            email,
-            verification_code
-        )
-
-    except Exception as error:
-
-        print("EMAIL ERROR:", error)
-
-        db.delete(new_user)
-        db.commit()
-
-        return {
-            "success": False,
-            "message": "Unable to send verification email."
-        }
-
-
-    # Redirect to verification page
     return RedirectResponse(
-        url=f"/verify-email?email={email}",
+        url="/login",
         status_code=303
     )
 
 
-# ==============================
+# ==========================================
 # LOGIN PAGE
-# ==============================
+# ==========================================
 
 @app.get("/login")
 async def login_page(request: Request):
@@ -189,10 +182,10 @@ async def login_page(request: Request):
         name="login.html"
     )
 
-# ==============================
-# LOGIN
-# ==============================
 
+# ==========================================
+# LOGIN
+# ==========================================
 @app.post("/auth/login")
 async def login_user(
     request: Request,
@@ -200,63 +193,65 @@ async def login_user(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-
     user = (
         db.query(models.User)
-        .filter(models.User.email == email)
+        .filter(
+            models.User.email == email
+        )
         .first()
     )
 
-    # User does not exist
     if not user:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={
+                "error": "Wrong email or password."
+            },
+            status_code=401
+        )
 
-        return {
-            "success": False,
-            "message": "Invalid email or password."
-        }
-
-    # Email not verified
-    if not user.is_verified:
-
-        return {
-            "success": False,
-            "message": "Please verify your email first."
-        }
-
-    # Password check
     if not verify_password(
         password,
         user.password
     ):
-
-        return {
-            "success": False,
-            "message": "Invalid email or password."
-        }
-
-    # ==============================
-    # SAVE USER IN SESSION
-    # ==============================
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={
+                "error": "Wrong password."
+            },
+            status_code=401
+        )
 
     request.session["user_id"] = user.id
     request.session["user_name"] = user.name
     request.session["user_email"] = user.email
 
-    # Login successful
     return RedirectResponse(
         url="/dashboard",
         status_code=303
     )
 
-# ==============================
+
+
+
+# ==========================================
 # DASHBOARD
-# ==============================
+# ==========================================
 
 @app.get("/dashboard")
-async def dashboard(request: Request):
+async def dashboard(
+    request: Request
+):
 
-    # Check logged-in user
-    user_id = request.session.get("user_id")
+    # --------------------------------------
+    # Check login
+    # --------------------------------------
+
+    user_id = request.session.get(
+        "user_id"
+    )
 
     if not user_id:
 
@@ -265,7 +260,11 @@ async def dashboard(request: Request):
             status_code=303
         )
 
-    # Get user information from session
+
+    # --------------------------------------
+    # User information
+    # --------------------------------------
+
     user_name = request.session.get(
         "user_name",
         "User"
@@ -276,6 +275,11 @@ async def dashboard(request: Request):
         ""
     )
 
+
+    # --------------------------------------
+    # Dashboard page
+    # --------------------------------------
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -284,24 +288,28 @@ async def dashboard(request: Request):
             "user_email": user_email
         }
     )
-# ==============================
+
+
+# ==========================================
 # LOGOUT
-# ==============================
+# ==========================================
 
 @app.get("/logout")
-async def logout(request: Request):
+async def logout(
+    request: Request
+):
 
-    # Clear login session
     request.session.clear()
 
-    # Go back to home page
     return RedirectResponse(
         url="/",
         status_code=303
     )
-# ==============================
-# PDF UPLOAD
-# ==============================
+
+
+# ==========================================
+# UPLOAD PDF
+# ==========================================
 
 @app.post("/upload-pdf")
 async def upload_pdf(
@@ -310,35 +318,50 @@ async def upload_pdf(
     db: Session = Depends(get_db)
 ):
 
-    # ==============================
-    # CHECK LOGIN
-    # ==============================
+    # --------------------------------------
+    # Check login
+    # --------------------------------------
 
-    user_id = request.session.get("user_id")
+    user_id = request.session.get(
+        "user_id"
+    )
 
     if not user_id:
 
         return {
             "success": False,
-            "message": "Please login first."
+            "message":
+                "Please login first."
         }
 
 
-    # ==============================
-    # CHECK PDF
-    # ==============================
+    # --------------------------------------
+    # Check file
+    # --------------------------------------
 
-    if not file.filename.lower().endswith(".pdf"):
+    if not file.filename:
 
         return {
             "success": False,
-            "message": "Only PDF files are allowed."
+            "message":
+                "Please select a PDF file."
         }
 
 
-    # ==============================
-    # CREATE UPLOAD FOLDER
-    # ==============================
+    if not file.filename.lower().endswith(
+        ".pdf"
+    ):
+
+        return {
+            "success": False,
+            "message":
+                "Only PDF files are allowed."
+        }
+
+
+    # --------------------------------------
+    # Create uploads folder
+    # --------------------------------------
 
     os.makedirs(
         "uploads",
@@ -346,24 +369,28 @@ async def upload_pdf(
     )
 
 
-    # ==============================
-    # CREATE UNIQUE DOCUMENT ID
-    # ==============================
+    # --------------------------------------
+    # Generate document ID
+    # --------------------------------------
 
     document_id = str(
         uuid.uuid4()
     )
 
 
-    # ==============================
-    # SAVE PDF FILE
-    # ==============================
+    # --------------------------------------
+    # File path
+    # --------------------------------------
 
     file_path = os.path.join(
         "uploads",
         f"{document_id}_{file.filename}"
     )
 
+
+    # --------------------------------------
+    # Save PDF
+    # --------------------------------------
 
     with open(
         file_path,
@@ -378,27 +405,41 @@ async def upload_pdf(
 
     try:
 
-        # ==============================
-        # EXTRACT PDF TEXT
-        # ==============================
+        # ----------------------------------
+        # Extract PDF text
+        # ----------------------------------
 
         text = extract_text_from_pdf(
             file_path
         )
 
 
-        # ==============================
-        # CREATE CHUNKS
-        # ==============================
+        if not text.strip():
+
+            raise Exception(
+                "No readable text found in PDF."
+            )
+
+
+        # ----------------------------------
+        # Split text into chunks
+        # ----------------------------------
 
         chunks = split_text_into_chunks(
             text
         )
 
 
-        # ==============================
-        # STORE CHUNKS IN CHROMADB
-        # ==============================
+        if not chunks:
+
+            raise Exception(
+                "No text chunks created."
+            )
+
+
+        # ----------------------------------
+        # Add chunks to ChromaDB
+        # ----------------------------------
 
         saved_chunks = add_chunks(
             chunks,
@@ -406,25 +447,18 @@ async def upload_pdf(
         )
 
 
-        # ==============================
-        # SAVE DOCUMENT IN MYSQL
-        # ==============================
+        # ----------------------------------
+        # Save document in database
+        # ----------------------------------
 
         new_document = models.Document(
-
             user_id=user_id,
-
             document_name=file.filename,
-
             file_path=file_path,
-
             document_id=document_id
         )
 
-
-        db.add(
-            new_document
-        )
+        db.add(new_document)
 
         db.commit()
 
@@ -433,13 +467,21 @@ async def upload_pdf(
         )
 
 
-        # ==============================
-        # SUCCESS LOG
-        # ==============================
+        # ----------------------------------
+        # Console information
+        # ----------------------------------
 
-        print("\n==============================")
-        print("PDF UPLOAD SUCCESS")
-        print("==============================")
+        print(
+            "\n=============================="
+        )
+
+        print(
+            "PDF UPLOAD SUCCESS"
+        )
+
+        print(
+            "=============================="
+        )
 
         print(
             "User ID:",
@@ -461,7 +503,9 @@ async def upload_pdf(
             saved_chunks
         )
 
-        print("==============================\n")
+        print(
+            "==============================\n"
+        )
 
 
     except Exception as error:
@@ -471,20 +515,30 @@ async def upload_pdf(
             error
         )
 
-        # Remove uploaded file if processing fails
-        if os.path.exists(file_path):
 
-            os.remove(file_path)
+        # ----------------------------------
+        # Remove failed file
+        # ----------------------------------
+
+        if os.path.exists(
+            file_path
+        ):
+
+            os.remove(
+                file_path
+            )
+
 
         return {
             "success": False,
-            "message": "Unable to process PDF."
+            "message":
+                "Unable to process PDF."
         }
 
 
-    # ==============================
-    # RESPONSE
-    # ==============================
+    # --------------------------------------
+    # Success response
+    # --------------------------------------
 
     return {
 
@@ -504,34 +558,9 @@ async def upload_pdf(
     }
 
 
-@app.get("/test-search")
-async def test_search(question: str):
-
-    results = search_chunks(
-        question,
-        n_results=3
-    )
-
-    return {
-        "question": question,
-        "results": results
-    }
-@app.get("/test-ai")
-async def test_ai(question: str):
-
-    answer = ask_ai(
-        question,
-        "The student is studying Bachelor of Engineering."
-    )
-
-    return {
-        "question": question,
-        "answer": answer
-    }
-
-# ==============================
+# ==========================================
 # ASK QUESTION
-# ==============================
+# ==========================================
 
 @app.post("/ask")
 async def ask_question(
@@ -543,9 +572,9 @@ async def ask_question(
 
     try:
 
-        # ==============================
-        # CHECK LOGIN
-        # ==============================
+        # ----------------------------------
+        # Check login
+        # ----------------------------------
 
         user_id = request.session.get(
             "user_id"
@@ -555,19 +584,23 @@ async def ask_question(
 
             return {
                 "success": False,
-                "message": "Please login first."
+                "message":
+                    "Please login first."
             }
 
 
-        # ==============================
-        # CHECK DOCUMENT OWNERSHIP
-        # ==============================
+        # ----------------------------------
+        # Check document ownership
+        # ----------------------------------
 
         document = (
             db.query(models.Document)
             .filter(
-                models.Document.document_id == document_id,
-                models.Document.user_id == user_id
+                models.Document.document_id
+                == document_id,
+
+                models.Document.user_id
+                == user_id
             )
             .first()
         )
@@ -577,13 +610,14 @@ async def ask_question(
 
             return {
                 "success": False,
-                "message": "You do not have access to this document."
+                "message":
+                    "You do not have access to this document."
             }
 
 
-        # ==============================
-        # SEARCH DOCUMENT CHUNKS
-        # ==============================
+        # ----------------------------------
+        # Search relevant chunks
+        # ----------------------------------
 
         chunks = search_chunks(
             question,
@@ -591,10 +625,6 @@ async def ask_question(
             n_results=3
         )
 
-
-        # ==============================
-        # NO RESULTS
-        # ==============================
 
         if not chunks:
 
@@ -605,18 +635,18 @@ async def ask_question(
             }
 
 
-        # ==============================
-        # CREATE CONTEXT
-        # ==============================
+        # ----------------------------------
+        # Create context
+        # ----------------------------------
 
         context = "\n\n".join(
             chunks
         )
 
 
-        # ==============================
-        # ASK AI
-        # ==============================
+        # ----------------------------------
+        # Ask AI
+        # ----------------------------------
 
         answer = ask_ai(
             question,
@@ -624,9 +654,9 @@ async def ask_question(
         )
 
 
-        # ==============================
-        # RESPONSE
-        # ==============================
+        # ----------------------------------
+        # Return answer
+        # ----------------------------------
 
         return {
 
@@ -654,9 +684,11 @@ async def ask_question(
             "message":
                 "Unable to answer the question."
         }
-    # ==============================
+
+
+# ==========================================
 # MY DOCUMENTS
-# ==============================
+# ==========================================
 
 @app.get("/documents")
 async def my_documents(
@@ -664,8 +696,13 @@ async def my_documents(
     db: Session = Depends(get_db)
 ):
 
-    # CHECK LOGIN
-    user_id = request.session.get("user_id")
+    # --------------------------------------
+    # Check login
+    # --------------------------------------
+
+    user_id = request.session.get(
+        "user_id"
+    )
 
     if not user_id:
 
@@ -674,11 +711,31 @@ async def my_documents(
             status_code=303
         )
 
-    # CURRENT USER KE DOCUMENTS
+
+    # --------------------------------------
+    # User information
+    # --------------------------------------
+
+    user_name = request.session.get(
+        "user_name",
+        "User"
+    )
+
+    user_email = request.session.get(
+        "user_email",
+        ""
+    )
+
+
+    # --------------------------------------
+    # Get documents
+    # --------------------------------------
+
     documents = (
         db.query(models.Document)
         .filter(
-            models.Document.user_id == user_id
+            models.Document.user_id
+            == user_id
         )
         .order_by(
             models.Document.id.desc()
@@ -686,11 +743,18 @@ async def my_documents(
         .all()
     )
 
+
+    # --------------------------------------
+    # Documents page
+    # --------------------------------------
+
     return templates.TemplateResponse(
         request=request,
         name="documents.html",
         context={
-            "documents": documents
+            "documents": documents,
+            "user_name": user_name,
+            "user_email": user_email
         }
     )
 
